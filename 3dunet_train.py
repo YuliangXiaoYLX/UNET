@@ -2,8 +2,8 @@
 Author: Chris Xiao yl.xiao@mail.utoronto.ca
 Date: 2023-11-28 13:49:29
 LastEditors: Chris Xiao yl.xiao@mail.utoronto.ca
-LastEditTime: 2023-12-15 15:07:17
-FilePath: /UNET/3dunet_train.py
+LastEditTime: 2025-04-20 23:41:14
+FilePath: /Downloads/UNET/3dunet_train.py
 Description: 
 I Love IU
 Copyright (c) 2023 by Chris Xiao yl.xiao@mail.utoronto.ca, All Rights Reserved. 
@@ -112,7 +112,8 @@ if __name__ == '__main__':
     
     # setup folders
     exp = cfg.experiment
-    root_dir = os.path.join(cfg.dataset.dataset_dir, '3D')
+    root_dir = cfg.dataset.root_dir
+    dataset_dir = os.path.join(root_dir, "dataset", "3D")
     exp_path = os.path.join(root_dir, exp)
     log_path = os.path.join(exp_path, 'log')
     ckpt_path = os.path.join(exp_path, 'checkpoint')
@@ -128,14 +129,14 @@ if __name__ == '__main__':
         make_if_dont_exist(plot_path, overwrite=True)
     
     datetime_object = 'training_log_' + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + '.log'
-    logger = setup_logger(f'EndoSAM', os.path.join(log_path, datetime_object))
+    logger = setup_logger('EndoSAM', os.path.join(log_path, datetime_object))
     tqdm_out = TqdmToLogger(logger,level=logging.INFO)
     logger.info(f"Welcome To {exp}")
     
     # load dataset
     logger.info("Load Dataset-Specific Parameters")
-    train_dir = os.path.join(root_dir, 'train')
-    test_dir = os.path.join(root_dir, 'test')
+    train_dir = os.path.join(dataset_dir, 'train')
+    test_dir = os.path.join(dataset_dir, 'test')
     tr_loader, va_loader, te_loader = dataset(cfg, train_dir, test_dir)
     with open(os.path.join(exp_path, 'dataset.pkl'), 'wb') as f:
         pickle.dump([tr_loader, va_loader, te_loader], f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -167,7 +168,7 @@ if __name__ == '__main__':
     )
     dsc = monai.metrics.DiceMetric(
         include_background=False,
-        reduction="mean"
+        reduction="mean_batch",
     )
 
     if resume:
@@ -214,16 +215,19 @@ if __name__ == '__main__':
                         seg = batch['seg'].to(device)
                         pred = model(img)
                         loss = dice_ce_loss(pred, seg)
-                        val_outputs = torch.argmax(pred.softmax(dim=1), dim=1, keepdim=True)
-                        val_labels = monai.networks.one_hot(seg, cfg.model.class_num)
+                        val_outputs = torch.argmax(pred, dim=1, keepdim=True)
+                        val_outputs = monai.networks.one_hot(val_outputs, num_classes=cfg.model.class_num)
+                        val_seg = monai.networks.one_hot(seg, num_classes=cfg.model.class_num)
                         # compute metric for current iteration
-                        dsc(y_pred=val_outputs, y=val_labels)
+                        dsc(y_pred=val_outputs, y=val_seg)
                         valid_loss.append(loss.item())
-                        tepoch.set_postfix(dice_score=torch.mean(dsc(y_pred=val_outputs, y=val_labels), dim=0))
+                        class_dice, _ = dsc.aggregate()
+                        dice_dict = {f"class_{i}": f"{v.item():.4f}" for i, v in enumerate(class_dice)}
+                        tepoch.set_postfix(**dice_dict)
             
             # aggregate the final mean dice result
-            metric = dsc.aggregate().item()
-            scores.append([epoch+1, metric])
+            metric, _ = dsc.aggregate()
+            scores.append([epoch+1, metric.mean().item()])
             # reset the status for next validation round
             dsc.reset()
             val_loss = np.mean(valid_loss, axis=0)

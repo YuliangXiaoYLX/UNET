@@ -2,8 +2,8 @@
 Author: mikami520 yxiao39@jh.edu
 Date: 2023-05-23 19:53:49
 LastEditors: Chris Xiao yl.xiao@mail.utoronto.ca
-LastEditTime: 2023-12-15 17:34:26
-FilePath: /UNET/metrics.py
+LastEditTime: 2025-04-20 01:47:01
+FilePath: /Downloads/UNET/metrics.py
 Description: evaluation metrics for HeartNet
 I Love IU
 Copyright (c) 2023 by Yuliang Xiao yl.xiao@mail.utoronto.ca, All Rights Reserved. 
@@ -19,7 +19,26 @@ import lookup_tables
 import numpy as np
 import pytorch3d as p3d
 from pytorch3d.ops import knn_points
+from pytorch3d.structures import Meshes
 
+def find_neighbors(edge_list):
+    neighbors = {}
+
+    for x in edge_list:
+        x = x.tolist()
+        u, v = x[0], x[1]
+        if u not in neighbors.keys():
+            neighbors[u] = set()
+        if v not in neighbors.keys():
+            neighbors[v] = set()
+
+        neighbors[u].add(v)
+        neighbors[v].add(u)
+
+    # Convert sets to lists for a more readable output
+    neighbors = {vertex: list(neigh) for vertex, neigh in neighbors.items()}
+
+    return neighbors
 
 def dice_score(y_pred, y_true):
         
@@ -383,26 +402,25 @@ def average_normal_error(y_true, y_pred):
     normal_error = 1 - torch.diag(normal_pred @ normal_target.t())
     return torch.mean(normal_error)
 
-def average_normalized_lap_distance(y_pred):
-    assert isinstance(y_pred, p3d.structures.Meshes)
+def average_normalized_lap_distance(y_pred: torch.Tensor) -> torch.Tensor:
+    assert isinstance(y_pred, Meshes)
     verts_pred = y_pred.verts_packed().to(torch.float32)
     edges_pred = y_pred.edges_packed()
-    verts_edges = verts_pred[edges_pred]
-    v0, v1 = verts_edges.unbind(1)
-    edge_loss = (v0-v1).norm(dim=1, p=2)
-    
-    with torch.no_grad():
-        L = y_pred.laplacian_packed()
-    
-    loss = L.mm(verts_pred)
-    lap_loss = loss.norm(dim=1, p=2)
-    normalized_lap_distance = 0
-    for i in range(verts_pred.shape[0]):
-        index = (edges_pred[:,0] == i).nonzero(as_tuple=False)
-        if index.nelement() != 0:
-            assert index.dim() == 2 and index.shape[1] == 1
-            normalized_lap_distance += lap_loss[i] / (edge_loss[index[:,0]].sum() / index.shape[0])
-        
+    normalized_lap_distance = 0.0
+    neighbors = find_neighbors(edges_pred)
+    for key, value in neighbors.items():
+        kp = verts_pred[value]
+        mean_kp = kp.mean(dim=0)
+        edge_loss = ((verts_pred[key] - kp).norm(dim=1, p="fro").sum(dim=0)) / len(
+            value
+        )
+        lap_loss = (verts_pred[key] - mean_kp).norm(dim=0, p="fro")
+        # add small value to avoid nan
+        anld = lap_loss / (edge_loss + 1e-5)
+        normalized_lap_distance += anld
+        # if not torch.isnan(anld):
+        #     normalized_lap_distance += anld
+
     return normalized_lap_distance / verts_pred.shape[0]
     
     

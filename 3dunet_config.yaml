@@ -1,28 +1,28 @@
-experiment: 3D UNet Liver
+experiment: 3D_UNet_Heart_MR
 
 # Model
 model:
-  class_num: 2 # 1 + 1
-  channels: [8,16,16,32,32,64,64]
+  class_num: 8 # 1 + 1
+  channels: [8,16,16,32,32,32,32]
   strides: [1,2,1,2,1,2] 
 
 # Dataset
 dataset:
-    dataset_dir: '/home/iu/Downloads/Liver'
+    root_dir: '/home/chris/Downloads/UNET_Data/Heart/mr'
 
 # Losses
 losses:
   ce:
-    weight: 0.5
+    weight: 0.0
   dice:
-    weight: 0.5
+    weight: 1.0
     
 # Optimizer
 opt_params:
   lr_default:  1e-4
 
 # Runner
-max_iter: 200
+max_iter: 60
 val_iter: 5
 # Dataloader  
 train_bs: 4 # 8
