@@ -1,4 +1,4 @@
-experiment: 2D_UNet_Heart_MR
+experiment: 2D_UNet_Heart_CT_150_Epochs
 
 # Model
 model:
@@ -8,7 +8,7 @@ model:
 
 # Dataset
 dataset:
-  root_dir: '/home/chris/Downloads/UNET_Data/Heart/mr'
+  root_dir: '/home/chrisxiao/Downloads/unet_code_and_data/UNET_Data/Heart/ct'
 
 # Losses
 losses:
@@ -22,7 +22,7 @@ opt_params:
   lr_default:  1e-4
 
 # Runner
-max_iter: 60
+max_iter: 150
 val_iter: 5
 # Dataloader  
 train_bs: 64 # 8

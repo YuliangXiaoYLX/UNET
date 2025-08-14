@@ -25,6 +25,19 @@ from typing import Tuple
 import io
 
 
+# helper: per-batch, per-class Dice (works for 2D/3D)
+def batch_per_class_dice(y_pred_oh, y_true_oh, eps=1e-8):
+    """
+    y_pred_oh, y_true_oh: one-hot float tensors [B, C, ...]
+    returns: dice [B, C]
+    """
+    assert y_pred_oh.shape == y_true_oh.shape
+    dims = tuple(range(2, y_pred_oh.ndim))  # sum over spatial dims
+    inter = (y_pred_oh * y_true_oh).sum(dim=dims)                 # [B, C]
+    card  = y_pred_oh.sum(dim=dims) + y_true_oh.sum(dim=dims)     # [B, C]
+    dice  = (2.0 * inter + eps) / (card + eps)                     # [B, C]
+    return dice
+
 def plot_progress(logger, save_dir, train_loss, val_loss, scores, name):
     """
     Should probably by improved
@@ -96,6 +109,8 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
         fileHandler.setFormatter(formatter)
         streamHandler = logging.StreamHandler()
         streamHandler.setFormatter(formatter)
+        fileHandler.setLevel(level)
+        streamHandler.setLevel(level)
         log_setup.addHandler(fileHandler)
         log_setup.addHandler(streamHandler)
     
