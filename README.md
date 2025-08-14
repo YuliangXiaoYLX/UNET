@@ -1,4 +1,4 @@
-# A-Simple-2D/3D-UNet-Pytorch-Tutorial
+# A Simple for 2D and 3D U-Net Pytorch Tutorial
 The results trained and tested on Liver dataset from [Medical Segmentation Decathlon](http://medicaldecathlon.com/). Checkpoints, loss plots, inference results etc are stored in the ```3D UNet Liver``` and ```2D UNet Liver```
 
 # Usage
