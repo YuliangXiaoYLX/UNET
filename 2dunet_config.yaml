@@ -22,8 +22,8 @@ opt_params:
   lr_default:  1e-4
 
 # Runner
-max_iter: 1000
-val_iter: 5
+max_epoch: 1000
+val_every: 5
 
 # Dataloader  
 train_bs: 64 # 8
