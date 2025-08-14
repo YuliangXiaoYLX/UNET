@@ -1,7 +1,46 @@
-# A-Simple-2D&3D-UNet-Pytorch-Tutorial
+# A-Simple-2D/3D-UNet-Pytorch-Tutorial
 The results trained and tested on Liver dataset from [Medical Segmentation Decathlon](http://medicaldecathlon.com/). Checkpoints, loss plots, inference results etc are stored in the ```3D UNet Liver``` and ```2D UNet Liver```
 
+# Usage
+
+- Clone the repository
+
+  ```bash
+  git clone https://github.com/mikami520/UNET.git && cd UNET
+  ```
+
+- Train (modify the `YAML` as needed)
+
+  Simply run
+
+  ```bash
+  python 2dunet_train.py --cfg 2dunet_config.yaml
+  ```
+  
+  or
+  
+  ```bash
+  python 3dunet_train.py --cfg 3dunet_config.yaml
+  ```
+
+  for `2D` and `3D` U-Net, respectively. Add `--resume` if you need to continue your previous training.
+
+- Test
+
+  Simply run
+
+  ```bash
+  python 2dunet_test.py --cfg 2dunet_config.yaml
+  ```
+  
+  or
+  
+  ```bash
+  python 3dunet_test.py --cfg 3dunet_config.yaml
+  ```
+  
 ## Metrics
+
 Multiple evaluation metrics are added to this tutorial:
 - Mean Dice Score
 - Mean Surface Distance
