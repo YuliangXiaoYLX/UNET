@@ -148,8 +148,8 @@ if __name__ == "__main__":
     val_losses = []
     scores = []
     best_val_score = -np.inf
-    max_iter = cfg.max_iter
-    val_iter = cfg.val_iter
+    max_epoch = cfg.max_epoch
+    val_every = cfg.val_every
     start_epoch = 0
     dice_ce_loss = monai.losses.DiceCELoss(
         include_background=False,
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     else:
         logger.info("Start Training")
 
-    for epoch in range(start_epoch, max_iter):
+    for epoch in range(start_epoch, max_epoch):
         train_loss = []
         model.train()
         with tqdm(tr_loader, file=tqdm_out, unit="batch") as tepoch:
@@ -198,7 +198,7 @@ if __name__ == "__main__":
         tr_loss = np.mean(train_loss, axis=0)
         train_losses.append([epoch + 1, tr_loss])
 
-        if epoch % val_iter == 0:
+        if epoch % val_every == 0:
             model.eval()
             dsc.reset()
             valid_loss = []
