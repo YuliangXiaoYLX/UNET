@@ -6,7 +6,7 @@ The results trained and tested on Liver dataset from [Medical Segmentation Decat
 - Clone the repository
 
   ```bash
-  git clone https://github.com/mikami520/UNET.git && cd UNET
+  git clone https://github.com/YuliangXiaoYLX/UNET.git && cd UNET
   ```
 
 - Train (modify the `YAML` as needed)
